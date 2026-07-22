@@ -82,6 +82,8 @@
   const HIDE_SIDEBAR_SHELL_CLASS = "xhec-hide-sidebar-shell";
   const PAGE_CONTROL_ID = "zen-view-page-control";
   const PAGE_PANEL_ID = "zen-view-page-panel";
+  const PAGE_PANEL_GAP = 8;
+  const PAGE_PANEL_VIEWPORT_MARGIN = 8;
   const SIDEBAR_ROOT_SELECTOR = '[data-testid="sidebarColumn"]';
   const SIDEBAR_LABEL_SELECTOR = [
     'aside[aria-label]',
@@ -601,6 +603,48 @@
     alignElementToNavigationCenter(postButton);
   }
 
+  function clampToRange(value, minimum, maximum) {
+    return Math.min(Math.max(value, minimum), Math.max(minimum, maximum));
+  }
+
+  function positionPagePanel(control) {
+    const button = control.querySelector(".xhec-page-button");
+    const panel = control.querySelector(".xhec-page-panel");
+
+    if (!button || !panel || panel.hidden) {
+      return;
+    }
+
+    const buttonRect = button.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+    const spaceAbove = buttonRect.top - PAGE_PANEL_GAP - PAGE_PANEL_VIEWPORT_MARGIN;
+    const spaceBelow = viewportHeight - buttonRect.bottom - PAGE_PANEL_GAP -
+      PAGE_PANEL_VIEWPORT_MARGIN;
+    const openAbove = panelRect.height > spaceBelow && spaceAbove > spaceBelow;
+    const desiredTop = openAbove
+      ? buttonRect.top - PAGE_PANEL_GAP - panelRect.height
+      : buttonRect.bottom + PAGE_PANEL_GAP;
+    const maximumTop = viewportHeight - panelRect.height -
+      PAGE_PANEL_VIEWPORT_MARGIN;
+    const maximumLeft = viewportWidth - panelRect.width -
+      PAGE_PANEL_VIEWPORT_MARGIN;
+    const top = clampToRange(
+      desiredTop,
+      PAGE_PANEL_VIEWPORT_MARGIN,
+      maximumTop,
+    );
+    const left = clampToRange(
+      buttonRect.left,
+      PAGE_PANEL_VIEWPORT_MARGIN,
+      maximumLeft,
+    );
+
+    panel.style.setProperty("--xhec-panel-top", `${Math.round(top)}px`);
+    panel.style.setProperty("--xhec-panel-left", `${Math.round(left)}px`);
+  }
+
   function positionPageControl(control) {
     const postButton = findPostButton();
     const postRect = postButton?.getBoundingClientRect();
@@ -714,6 +758,7 @@
       event.stopPropagation();
       panel.hidden = !panel.hidden;
       button.setAttribute("aria-expanded", String(!panel.hidden));
+      positionPagePanel(control);
     });
 
     panel.append(title, list);
@@ -734,6 +779,7 @@
     alignCompactXLogo();
     alignCompactPostButton();
     positionPageControl(control);
+    positionPagePanel(control);
     renderPageControlSettings();
   }
 

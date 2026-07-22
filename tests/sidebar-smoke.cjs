@@ -180,6 +180,82 @@ async function main() {
 
     assert.equal(await homePage.evaluate(() => window.getZenViewListenerCount()), 1);
     assert.deepEqual(await hiddenCardIds(homePage), []);
+
+    await homePage.setViewportSize({ width: 800, height: 600 });
+    await homePage.evaluate(() => {
+      const control = document.getElementById("zen-view-page-control");
+      control.style.setProperty("--xhec-control-top", "550px");
+      control.style.setProperty("--xhec-control-left", "760px");
+    });
+    await homePage.locator(".xhec-page-button").click();
+
+    const largeViewportPanel = await homePage.evaluate(() => {
+      const buttonRect = document.querySelector(".xhec-page-button")
+        .getBoundingClientRect();
+      const panel = document.getElementById("zen-view-page-panel");
+      const panelRect = panel.getBoundingClientRect();
+
+      return {
+        buttonTop: buttonRect.top,
+        panelBottom: panelRect.bottom,
+        panelLeft: panelRect.left,
+        panelRight: panelRect.right,
+        panelTop: panelRect.top,
+        viewportHeight: window.innerHeight,
+        viewportWidth: window.innerWidth,
+      };
+    });
+
+    assert.ok(largeViewportPanel.panelTop >= 8, "panel must stay on-screen at top");
+    assert.ok(largeViewportPanel.panelLeft >= 8, "panel must stay on-screen at left");
+    assert.ok(
+      largeViewportPanel.panelRight <= largeViewportPanel.viewportWidth - 8,
+      "panel must stay on-screen at right",
+    );
+    assert.ok(
+      largeViewportPanel.panelBottom <= largeViewportPanel.viewportHeight - 8,
+      "panel must stay on-screen at bottom",
+    );
+    assert.ok(
+      largeViewportPanel.panelBottom <= largeViewportPanel.buttonTop - 8,
+      "panel must open above a trigger near the viewport bottom",
+    );
+
+    await homePage.setViewportSize({ width: 500, height: 300 });
+    await homePage.waitForTimeout(150);
+    const shortViewportPanel = await homePage.evaluate(() => {
+      const panel = document.getElementById("zen-view-page-panel");
+      const panelRect = panel.getBoundingClientRect();
+
+      return {
+        bottom: panelRect.bottom,
+        clientHeight: panel.clientHeight,
+        overflowY: getComputedStyle(panel).overflowY,
+        scrollHeight: panel.scrollHeight,
+        top: panelRect.top,
+        viewportHeight: window.innerHeight,
+      };
+    });
+
+    assert.ok(shortViewportPanel.top >= 8, "short panel must stay on-screen at top");
+    assert.ok(
+      shortViewportPanel.bottom <= shortViewportPanel.viewportHeight - 8,
+      "short panel must stay on-screen at bottom",
+    );
+    assert.equal(shortViewportPanel.overflowY, "auto");
+    assert.ok(
+      shortViewportPanel.scrollHeight > shortViewportPanel.clientHeight,
+      "short panel must scroll internally",
+    );
+
+    await homePage.evaluate(() => {
+      const panel = document.getElementById("zen-view-page-panel");
+      const button = document.querySelector(".xhec-page-button");
+      panel.hidden = true;
+      button.setAttribute("aria-expanded", "false");
+    });
+    await homePage.setViewportSize({ width: 1280, height: 720 });
+
     const sidebarWidth = await homePage.locator("#sidebar").evaluate(
       (element) => element.getBoundingClientRect().width,
     );
