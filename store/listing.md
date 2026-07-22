@@ -53,3 +53,7 @@ https://github.com/g6000/zen-view-for-x
 ## Support
 
 https://github.com/g6000/zen-view-for-x/issues
+
+## Privacy policy
+
+https://github.com/g6000/zen-view-for-x/blob/main/PRIVACY.md

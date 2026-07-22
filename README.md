@@ -1,5 +1,7 @@
 # Zen View for X
 
+[![CI](https://github.com/g6000/zen-view-for-x/actions/workflows/ci.yml/badge.svg)](https://github.com/g6000/zen-view-for-x/actions/workflows/ci.yml)
+
 Zen View for X is a lightweight Chromium extension that makes X calmer and easier to read. It removes selected interface noise while keeping the timeline and normal post interactions usable.
 
 The extension is developed and tested primarily in Arc and also supports Chromium-based browsers that implement Manifest V3.
