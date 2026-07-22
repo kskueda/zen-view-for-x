@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zen View for X</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup">
+      <div class="heading">
+        <h1>Zen View</h1>
+        <p id="statusText">読み込み中</p>
+      </div>
+
+      <div class="toggle-list">
+        <label class="toggle-row" for="engagementCountsToggle">
+          <span class="toggle-copy">
+            <span>数値を表示する</span>
+            <span>返信・リポスト・いいね・表示数</span>
+          </span>
+          <input
+            id="engagementCountsToggle"
+            type="checkbox"
+            role="switch"
+            data-setting-key="engagementCounts"
+          >
+        </label>
+
+        <label class="toggle-row" for="promotedPostsToggle">
+          <span class="toggle-copy">
+            <span>広告ポストを表示する</span>
+            <span>Ad / Ads / 広告 / Promoted</span>
+          </span>
+          <input
+            id="promotedPostsToggle"
+            type="checkbox"
+            role="switch"
+            data-setting-key="promotedPosts"
+          >
+        </label>
+
+        <label class="toggle-row" for="sidebarPremiumToggle">
+          <span class="toggle-copy">
+            <span>右欄: プレミアムを表示する</span>
+            <span>プレミアムにサブスクライブ</span>
+          </span>
+          <input
+            id="sidebarPremiumToggle"
+            type="checkbox"
+            role="switch"
+            data-setting-key="sidebarPremium"
+          >
+        </label>
+
+        <label class="toggle-row" for="sidebarLiveToggle">
+          <span class="toggle-copy">
+            <span>右欄: ライブを表示する</span>
+            <span>Xでライブ放送する</span>
+          </span>
+          <input
+            id="sidebarLiveToggle"
+            type="checkbox"
+            role="switch"
+            data-setting-key="sidebarLive"
+          >
+        </label>
+
+        <label class="toggle-row" for="sidebarRecommendationsToggle">
+          <span class="toggle-copy">
+            <span>右欄: おすすめユーザーを表示する</span>
+            <span>おすすめユーザー・おすすめアカウント</span>
+          </span>
+          <input
+            id="sidebarRecommendationsToggle"
+            type="checkbox"
+            role="switch"
+            data-setting-key="sidebarRecommendations"
+          >
+        </label>
+
+        <label class="toggle-row" for="sidebarTrendsToggle">
+          <span class="toggle-copy">
+            <span>右欄: トレンドを表示する</span>
+            <span>いまを見つけよう・話題</span>
+          </span>
+          <input
+            id="sidebarTrendsToggle"
+            type="checkbox"
+            role="switch"
+            data-setting-key="sidebarTrends"
+          >
+        </label>
+
+        <label class="toggle-row" for="sidebarNewsToggle">
+          <span class="toggle-copy">
+            <span>右欄: ニュースを表示する</span>
+            <span>本日のニュース・今日のニュース</span>
+          </span>
+          <input
+            id="sidebarNewsToggle"
+            type="checkbox"
+            role="switch"
+            data-setting-key="sidebarNews"
+          >
+        </label>
+
+        <label class="toggle-row" for="leftNavIconOnlyToggle">
+          <span class="toggle-copy">
+            <span>左ナビの文字を表示する</span>
+            <span>ホーム・検索・通知・ブックマークなど</span>
+          </span>
+          <input
+            id="leftNavIconOnlyToggle"
+            type="checkbox"
+            role="switch"
+            data-setting-key="leftNavIconOnly"
+          >
+        </label>
+      </div>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

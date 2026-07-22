@@ -1,0 +1,19 @@
+{
+  "name": "zen-view-for-x",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Development and release tooling for the Zen View for X browser extension.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node tests/sidebar-smoke.cjs",
+    "check": "node --check src/content.js && node --check src/popup.js && node --check tests/sidebar-smoke.cjs && node scripts/verify-extension.mjs",
+    "package": "node scripts/package-extension.mjs",
+    "store-assets": "node scripts/generate-store-assets.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1"
+  }
+}

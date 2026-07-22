@@ -1,0 +1,310 @@
+html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="reply"] [data-testid="app-text-transition-container"],
+html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="like"] [data-testid="app-text-transition-container"],
+html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="unlike"] [data-testid="app-text-transition-container"],
+html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="retweet"] [data-testid="app-text-transition-container"],
+html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="unretweet"] [data-testid="app-text-transition-container"],
+html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="analytics"] [data-testid="app-text-transition-container"],
+html.xhec-hide-engagement-counts article[data-testid="tweet"] a[href$="/analytics"] [data-testid="app-text-transition-container"],
+html.xhec-hide-engagement-counts article[data-testid="tweet"] a[href*="/analytics?"] [data-testid="app-text-transition-container"],
+html.xhec-hide-engagement-counts .xhec-hidden-engagement-count,
+html.xhec-hide-promoted-posts .xhec-hidden-promoted,
+html.xhec-hide-sidebar-boxes .xhec-hidden-sidebar-box {
+  display: none !important;
+}
+
+html.xhec-hide-sidebar-shell [data-testid="sidebarColumn"] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] nav[role="navigation"] :is(a[role="link"], div[role="button"], button, [role="button"]) {
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] {
+  align-items: flex-end !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] > div {
+  align-items: flex-end !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] nav[role="navigation"] {
+  align-items: flex-end !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] :is(h1, h2, [role="heading"]):has(a[aria-label="X"]),
+html.xhec-left-nav-icon-only header[role="banner"] :is(h1, h2, [role="heading"]) > div:has(> a[aria-label="X"]),
+html.xhec-left-nav-icon-only header[role="banner"] a[aria-label="X"] {
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] :is(h1, h2, [role="heading"]):has(a[aria-label="X"]),
+html.xhec-left-nav-icon-only header[role="banner"] :is(h1, h2, [role="heading"]) > div:has(> a[aria-label="X"]) {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-self: flex-end !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] a[aria-label="X"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: flex-end !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] nav[role="navigation"] :is(a[role="link"], div[role="button"], button, [role="button"]) :is(div, span)[dir="ltr"],
+html.xhec-left-nav-icon-only header[role="banner"] nav[role="navigation"] :is(a[role="link"], div[role="button"], button, [role="button"]) :is(div, span)[dir="auto"],
+html.xhec-left-nav-icon-only header[role="banner"] nav[role="navigation"] :is(a[role="link"], div[role="button"], button, [role="button"]) :is(div, span):not(:has(svg)):not([aria-hidden="true"]) {
+  display: none !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] a[data-testid="SideNav_NewTweet_Button"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: flex-end !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] a[data-testid="SideNav_NewTweet_Button"] * {
+  display: none !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] a[data-testid="SideNav_NewTweet_Button"]::before {
+  content: "\270E";
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] :is([data-testid="SideNav_AccountSwitcher_Button"], [role="button"]:has(img), button:has(img)) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: flex-end !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 0 !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] :is([data-testid="SideNav_AccountSwitcher_Button"], [role="button"]:has(img), button:has(img)) > *:not(:first-child) {
+  display: none !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] :is([data-testid="SideNav_AccountSwitcher_Button"], [role="button"]:has(img), button:has(img)) > *:first-child {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  padding: 0 !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] :is([data-testid="SideNav_AccountSwitcher_Button"], [role="button"]:has(img), button:has(img)) > div > div:not(:first-child),
+html.xhec-left-nav-icon-only header[role="banner"] :is([data-testid="SideNav_AccountSwitcher_Button"], [role="button"]:has(img), button:has(img)) :is(span, div[dir="ltr"], div[dir="auto"], svg) {
+  display: none !important;
+}
+
+html.xhec-left-nav-icon-only header[role="banner"] :is([data-testid="SideNav_AccountSwitcher_Button"], [role="button"]:has(img), button:has(img)) img {
+  display: block !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 999px !important;
+}
+
+.xhec-page-control,
+.xhec-page-control * {
+  box-sizing: border-box;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.xhec-page-control {
+  position: fixed;
+  top: var(--xhec-control-top, 12px);
+  left: var(--xhec-control-left, 76px);
+  z-index: 2147483647;
+}
+
+.xhec-page-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: #0f1419;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.xhec-page-button svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.3;
+}
+
+.xhec-page-button:hover {
+  background: rgba(15, 20, 25, 0.08);
+}
+
+.xhec-page-button:focus-visible {
+  outline: 2px solid #1d9bf0;
+  outline-offset: 2px;
+}
+
+.xhec-page-panel {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  width: 318px;
+  padding: 14px;
+  border: 1px solid rgba(15, 20, 25, 0.12);
+  border-radius: 8px;
+  color: #0f1419;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 36px rgba(15, 20, 25, 0.18);
+}
+
+.xhec-page-panel[hidden] {
+  display: none !important;
+}
+
+.xhec-page-panel h2 {
+  margin: 0 0 10px;
+  color: #0f1419;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.xhec-page-toggle-list {
+  display: grid;
+  gap: 10px;
+}
+
+.xhec-page-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 42px;
+}
+
+.xhec-page-toggle-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.xhec-page-toggle-copy span:first-child {
+  color: #0f1419;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.xhec-page-toggle-copy span:last-child {
+  color: #536471;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.xhec-page-toggle-row input[role="switch"] {
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  appearance: none;
+  border-radius: 999px;
+  background: #8a98a5;
+  cursor: pointer;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.xhec-page-toggle-row input[role="switch"]::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 160ms ease;
+}
+
+.xhec-page-toggle-row input[role="switch"]:checked {
+  background: #1d9bf0;
+}
+
+.xhec-page-toggle-row input[role="switch"]:checked::before {
+  transform: translateX(18px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .xhec-page-button {
+    border-color: rgba(239, 243, 244, 0.18);
+    color: #f7f9f9;
+    background: rgba(22, 24, 28, 0.96);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .xhec-page-button:hover {
+    background: #1d1f23;
+  }
+
+  .xhec-page-panel {
+    border-color: rgba(239, 243, 244, 0.14);
+    color: #f7f9f9;
+    background: rgba(22, 24, 28, 0.98);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.42);
+  }
+
+  .xhec-page-panel h2,
+  .xhec-page-toggle-copy span:first-child {
+    color: #f7f9f9;
+  }
+
+  .xhec-page-toggle-copy span:last-child {
+    color: #8b98a5;
+  }
+}

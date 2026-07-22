@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Zen View for X",
+  "short_name": "Zen View",
+  "description": "A calmer X experience with controls for metrics, promoted posts, sidebars, and compact navigation.",
+  "version": "1.0.0",
+  "homepage_url": "https://github.com/g6000/zen-view-for-x",
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_title": "Zen View for X",
+    "default_popup": "src/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "css": [
+        "src/content.css"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
