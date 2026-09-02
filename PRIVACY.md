@@ -31,4 +31,4 @@ Material changes to this policy will be documented in this repository and reflec
 
 ## Contact
 
-Questions can be opened through the repository's [GitHub issues](https://github.com/g6000/zen-view-for-x/issues).
+Questions can be opened through the repository's [GitHub issues](https://github.com/kskueda/zen-view-for-x/issues).

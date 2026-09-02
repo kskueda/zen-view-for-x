@@ -48,12 +48,12 @@ Japanese
 
 ## Homepage
 
-https://github.com/g6000/zen-view-for-x
+https://github.com/kskueda/zen-view-for-x
 
 ## Support
 
-https://github.com/g6000/zen-view-for-x/issues
+https://github.com/kskueda/zen-view-for-x/issues
 
 ## Privacy policy
 
-https://github.com/g6000/zen-view-for-x/blob/main/PRIVACY.md
+https://github.com/kskueda/zen-view-for-x/blob/main/PRIVACY.md
