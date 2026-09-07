@@ -22,6 +22,10 @@ async function createPopup(browser) {
     const api = window.chrome || {};
     window.chrome = api;
     api.runtime = {};
+    const listeners = [];
+    window.changeStoredSettings = (settings) => {
+      listeners.forEach((listener) => listener({ xhecSettings: { newValue: settings } }, "local"));
+    };
     window.writes = [];
     api.storage = { local: {
       get(_keys, callback) {
@@ -39,7 +43,7 @@ async function createPopup(browser) {
           api.runtime.lastError = undefined;
         };
       },
-    } };
+    }, onChanged: { addListener(listener) { listeners.push(listener); } } };
   });
   await page.route("https://zen-view.test/**", (route) => {
     const name = new URL(route.request().url()).pathname.slice(1);
@@ -82,6 +86,27 @@ async function main() {
     await failedRead.evaluate(() => window.resolveRead(null, true));
     assert.match(await failedRead.locator("#statusText").textContent(), /読み込めません/);
     assert.equal(await failedRead.locator("[data-setting-key]").first().isDisabled(), true);
+
+    await page.evaluate((settings) => window.changeStoredSettings(settings), savedSettings);
+    assert.equal(await toggles.first().isChecked(), true,
+      "an open popup must reflect changes from the in-page panel or another window");
+    const newerSettings = { ...savedSettings, sidebarNews: true };
+    await toggles.first().uncheck();
+    await page.evaluate((settings) => window.changeStoredSettings(settings), newerSettings);
+    await page.evaluate(() => window.resolveWrite(true));
+    assert.equal(await page.locator('[data-setting-key="sidebarNews"]').isChecked(), false,
+      "a failed save must not roll back a newer external setting");
+    await toggles.first().uncheck();
+    assert.deepEqual(await page.evaluate(() => window.writes.at(-1)), {
+      xhecSettings: { ...newerSettings, engagementCounts: true },
+    }, "subsequent edits must preserve externally updated preferences");
+    await page.evaluate(() => window.resolveWrite());
+
+    const lateRead = await createPopup(browser);
+    await lateRead.evaluate((settings) => window.changeStoredSettings(settings), newerSettings);
+    await lateRead.evaluate((settings) => window.resolveRead(settings), savedSettings);
+    assert.equal(await lateRead.locator('[data-setting-key="sidebarNews"]').isChecked(), false,
+      "a late initial read must not overwrite newer storage events");
     console.log("popup smoke test passed");
   } finally {
     await browser.close();

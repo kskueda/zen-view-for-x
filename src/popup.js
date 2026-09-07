@@ -18,6 +18,7 @@
   let settings = { ...DEFAULT_SETTINGS };
   let loaded = false;
   let saving = false;
+  let storageRevision = 0;
 
   function normalizeSettings(value) {
     return Object.fromEntries(
@@ -70,12 +71,13 @@
   }
 
   function saveSettings(previousSettings) {
+    const revisionBeforeSave = storageRevision;
     saving = true;
     renderSettings();
     chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: settings }, () => {
       const failed = Boolean(chrome.runtime?.lastError);
       saving = false;
-      if (failed) {
+      if (failed && storageRevision === revisionBeforeSave) {
         settings = previousSettings;
       }
       renderSettings();
@@ -86,10 +88,23 @@
   }
 
   toggles.forEach((toggle) => { toggle.disabled = true; });
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "local" || !changes[SETTINGS_STORAGE_KEY]) {
+      return;
+    }
+    storageRevision += 1;
+    settings = normalizeSettings(changes[SETTINGS_STORAGE_KEY].newValue);
+    loaded = true;
+    renderSettings();
+  });
   chrome.storage.local.get(
     { [SETTINGS_STORAGE_KEY]: null, [LEGACY_STORAGE_KEY]: null },
     (items) => {
-      if (chrome.runtime?.lastError) {
+      const failed = Boolean(chrome.runtime?.lastError);
+      if (storageRevision > 0) {
+        return;
+      }
+      if (failed) {
         statusText.textContent = "設定を読み込めませんでした。開き直してください。";
         return;
       }

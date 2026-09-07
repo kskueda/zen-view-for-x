@@ -154,6 +154,7 @@
   let settings = { ...DEFAULT_SETTINGS };
   let settingsLoaded = false;
   let settingsSaving = false;
+  let storageRevision = 0;
   let scanTimer = 0;
   let uiTimer = 0;
 
@@ -235,12 +236,13 @@
     }
 
     const previousSettings = settings;
+    const revisionBeforeSave = storageRevision;
     settingsSaving = true;
     applySettings(normalizedSettings);
     chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: normalizedSettings }, () => {
       const failed = Boolean(chrome.runtime?.lastError);
       settingsSaving = false;
-      if (failed) {
+      if (failed && storageRevision === revisionBeforeSave) {
         applySettings(previousSettings);
       } else {
         renderPageControlSettings();
@@ -823,8 +825,13 @@
   }
 
   function schedulePageControlRefresh() {
-    window.clearTimeout(uiTimer);
-    uiTimer = window.setTimeout(ensurePageControl, OBSERVER_DEBOUNCE_MS);
+    if (uiTimer) {
+      return;
+    }
+    uiTimer = window.setTimeout(() => {
+      uiTimer = 0;
+      ensurePageControl();
+    }, OBSERVER_DEBOUNCE_MS);
   }
 
   function shouldSkipElement(element) {
@@ -886,8 +893,14 @@
       return;
     }
 
-    window.clearTimeout(scanTimer);
-    scanTimer = window.setTimeout(scanTimeline, OBSERVER_DEBOUNCE_MS);
+    // Keep a bounded delay even while live content is continuously changing.
+    if (scanTimer) {
+      return;
+    }
+    scanTimer = window.setTimeout(() => {
+      scanTimer = 0;
+      scanTimeline();
+    }, OBSERVER_DEBOUNCE_MS);
   }
 
   function scheduleDomRefresh() {
@@ -904,7 +917,11 @@
     chrome.storage.local.get(
       { [SETTINGS_STORAGE_KEY]: null, [LEGACY_STORAGE_KEY]: null },
       (items) => {
-        if (chrome.runtime?.lastError) {
+        const failed = Boolean(chrome.runtime?.lastError);
+        if (storageRevision > 0) {
+          return;
+        }
+        if (failed) {
           const button = document.querySelector(`#${PAGE_CONTROL_ID} .xhec-page-button`);
           if (button) button.title = "Settings could not be loaded. Please reload the page.";
           return;
@@ -919,11 +936,13 @@
       }
 
       if (changes[SETTINGS_STORAGE_KEY]) {
+        storageRevision += 1;
         applySettings(changes[SETTINGS_STORAGE_KEY].newValue);
         return;
       }
 
       if (changes[LEGACY_STORAGE_KEY] && !changes[SETTINGS_STORAGE_KEY]) {
+        storageRevision += 1;
         applySettings(
           settingsFromStorage({
             [SETTINGS_STORAGE_KEY]: null,
@@ -954,11 +973,16 @@
   });
 
   window.addEventListener("resize", schedulePageControlRefresh);
+  window.addEventListener("scroll", schedulePageControlRefresh, { capture: true, passive: true });
+  window.addEventListener("popstate", scheduleDomRefresh);
+  window.navigation?.addEventListener("navigatesuccess", scheduleDomRefresh);
 
   const observer = new MutationObserver(scheduleDomRefresh);
   observer.observe(document.documentElement, {
     childList: true,
     characterData: true,
+    attributes: true,
+    attributeFilter: ["data-testid", "aria-label", "role", "href"],
     subtree: true,
   });
 })();

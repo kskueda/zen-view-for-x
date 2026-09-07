@@ -109,34 +109,38 @@ async function createFixturePage(browser, url, initialSettings, deferRead = fals
     chromeApi.storage = {
       local: {
         get(_defaults, callback) {
+          const snapshot = structuredClone(storedSettings);
           window.finishZenRead = () => callback({
             hideEngagementCounts: null,
-            xhecSettings: storedSettings,
+            xhecSettings: snapshot,
           });
           if (!deferRead) window.finishZenRead();
         },
         set(items, callback) {
-          if (window.failNextZenWrite) {
-            window.failNextZenWrite = false;
-            chromeApi.runtime.lastError = { message: "Write failed" };
-            callback?.();
-            chromeApi.runtime.lastError = undefined;
-            return;
-          }
-          const oldValue = storedSettings;
-          storedSettings = items.xhecSettings;
-          listeners.forEach((listener) => {
-            listener(
-              {
-                xhecSettings: {
-                  newValue: storedSettings,
-                  oldValue,
+          window.finishZenWrite = () => {
+            if (window.failNextZenWrite) {
+              window.failNextZenWrite = false;
+              chromeApi.runtime.lastError = { message: "Write failed" };
+              callback?.();
+              chromeApi.runtime.lastError = undefined;
+              return;
+            }
+            const oldValue = storedSettings;
+            storedSettings = items.xhecSettings;
+            listeners.forEach((listener) => {
+              listener(
+                {
+                  xhecSettings: {
+                    newValue: storedSettings,
+                    oldValue,
+                  },
                 },
-              },
-              "local",
-            );
-          });
-          callback?.();
+                "local",
+              );
+            });
+            callback?.();
+          };
+          if (!window.deferZenWrite) window.finishZenWrite();
         },
       },
       onChanged: {
@@ -487,6 +491,84 @@ async function main() {
     assert.equal(await loadingToggle.isChecked(), true, "failed in-page saves must restore the previous setting");
     assert.equal(await loadingPage.evaluate(() => document.documentElement.classList.contains(
       "xhec-hide-engagement-counts")), false, "failed saves must also restore the page display");
+
+    const newerSettings = { ...visibleSettings, sidebarNews: true };
+    const lateReadPage = await createFixturePage(browser, "https://x.com/home", visibleSettings, true);
+    await setSettings(lateReadPage, newerSettings);
+    await lateReadPage.evaluate(() => window.finishZenRead());
+    assert.deepEqual(await hiddenCardIds(lateReadPage), ["news"],
+      "a late initial read must not overwrite newer in-page storage events");
+
+    await loadingPage.evaluate(() => { window.deferZenWrite = true; });
+    await loadingToggle.uncheck();
+    await setSettings(loadingPage, newerSettings);
+    await loadingPage.evaluate(() => {
+      window.failNextZenWrite = true;
+      window.finishZenWrite();
+    });
+    assert.deepEqual(await hiddenCardIds(loadingPage), ["news"],
+      "a failed in-page save must preserve newer external settings");
+
+    await chatPage.evaluate(() => history.pushState({}, "", "/home"));
+    await chatPage.waitForTimeout(150);
+    assert.equal(await chatPage.locator("#sidebar").evaluate((element) => getComputedStyle(element).visibility),
+      "hidden", "same-document navigation to home must refresh sidebar visibility without a DOM mutation");
+    await chatPage.evaluate(() => history.pushState({}, "", "/i/chat"));
+    await chatPage.waitForTimeout(150);
+    assert.equal(await chatPage.locator("#sidebar").evaluate((element) => getComputedStyle(element).visibility),
+      "visible", "same-document navigation to chat must restore its content");
+
+    const scrollPage = await createFixturePage(browser, "https://x.com/home", {
+      ...visibleSettings, leftNavIconOnly: true,
+    });
+    await scrollPage.evaluate(() => {
+      document.body.style.minHeight = "2000px";
+      const header = document.createElement("header");
+      header.setAttribute("role", "banner");
+      header.innerHTML = '<div style="position:absolute;top:250px;left:60px"><a data-testid="SideNav_NewTweet_Button" href="/compose/post">Post</a></div>';
+      document.body.append(header);
+    });
+    await scrollPage.waitForFunction(() => document.querySelector(".xhec-page-button").getBoundingClientRect().top === 316);
+    await scrollPage.evaluate(() => window.scrollTo(0, 200));
+    await scrollPage.waitForTimeout(150);
+    assert.equal(await scrollPage.locator(".xhec-page-button").evaluate((element) => element.getBoundingClientRect().top),
+      116, "scrolling must keep the settings trigger attached to its navigation anchor");
+
+    const reusePage = await createFixturePage(browser, "https://x.com/home", {
+      ...visibleSettings, promotedPosts: true, sidebarPremium: true, engagementCounts: true,
+    });
+    await reusePage.locator("#videoMount").evaluate((element) => {
+      element.setAttribute("data-testid", "promotedIndicator");
+    });
+    await reusePage.waitForTimeout(150);
+    assert.equal(await reusePage.locator("#videoTweet").isVisible(), false,
+      "attribute-only promoted markers must hide a reused tweet");
+    await reusePage.locator("#recommendations").evaluate((element) => {
+      element.setAttribute("aria-label", "Premium");
+    });
+    await reusePage.waitForTimeout(150);
+    assert.equal(await reusePage.locator("#recommendations").isVisible(), false,
+      "attribute-only sidebar label changes must be reclassified");
+    await reusePage.evaluate(() => {
+      document.getElementById("videoMount").removeAttribute("data-testid");
+      document.getElementById("recommendations").setAttribute("aria-label", "Who to follow");
+    });
+    await reusePage.waitForTimeout(150);
+    assert.equal(await reusePage.locator("#videoTweet").isVisible(), true);
+    assert.equal(await reusePage.locator("#recommendations").isVisible(), true);
+
+    await reusePage.evaluate(() => {
+      const ticker = document.createElement("span");
+      document.body.append(ticker);
+      let tick = 0;
+      window.mutationTimer = setInterval(() => { ticker.textContent = String(++tick); }, 10);
+      document.getElementById("dynamicCount").firstChild.data = "42";
+    });
+    await reusePage.waitForTimeout(300);
+    const countDuringUpdates = await reusePage.locator("#dynamicCount").isVisible();
+    await reusePage.evaluate(() => clearInterval(window.mutationTimer));
+    assert.equal(countDuringUpdates, false,
+      "continuous DOM updates must not indefinitely postpone filtering");
 
     assert.deepEqual(pageErrors, [], "fixtures must not emit uncaught page errors");
     console.log("sidebar smoke test passed");
