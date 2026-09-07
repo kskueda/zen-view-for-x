@@ -12,6 +12,17 @@ const contentStyle = fs.readFileSync(
   path.join(extensionRoot, "src", "content.css"),
   "utf8",
 );
+const pageErrors = [];
+const screenshotDirectory = process.argv.includes("--screenshots")
+  ? path.join(extensionRoot, "dist", "qa")
+  : null;
+
+async function captureScreenshot(page, name) {
+  if (screenshotDirectory) {
+    fs.mkdirSync(screenshotDirectory, { recursive: true });
+    await page.screenshot({ path: path.join(screenshotDirectory, name) });
+  }
+}
 
 const settingToCard = {
   sidebarPremium: "premium",
@@ -46,6 +57,16 @@ const fixture = `<!doctype html>
       <article data-testid="tweet" id="textAd">
         <span>広告</span>
       </article>
+      <article data-testid="tweet" id="namedAd">
+        <div data-testid="User-Name"><span>Ad</span></div>
+        <div data-testid="tweetText">An ordinary post</div>
+      </article>
+      <article data-testid="tweet" id="linkedAd">
+        <a href="/example"><span>Sponsored</span></a>
+      </article>
+      <article data-testid="tweet" id="countTweet">
+        <button data-testid="like"><svg width="24" height="24"></svg><span id="dynamicCount">Like</span></button>
+      </article>
     </main>
     <div data-testid="sidebarColumn" id="sidebar" style="width: 350px">
       <form role="search"><input aria-label="Search"></form>
@@ -73,24 +94,35 @@ const fixture = `<!doctype html>
   </body>
 </html>`;
 
-async function createFixturePage(browser, url, initialSettings) {
+async function createFixturePage(browser, url, initialSettings, deferRead = false) {
   const page = await browser.newPage();
+  page.setDefaultTimeout(5000);
+  page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  await page.addInitScript((settings) => {
+  await page.addInitScript(({ settings, deferRead }) => {
     const listeners = [];
     let storedSettings = settings;
 
     const chromeApi = window.chrome || {};
     window.chrome = chromeApi;
+    chromeApi.runtime = {};
     chromeApi.storage = {
       local: {
         get(_defaults, callback) {
-          callback({
+          window.finishZenRead = () => callback({
             hideEngagementCounts: null,
             xhecSettings: storedSettings,
           });
+          if (!deferRead) window.finishZenRead();
         },
         set(items, callback) {
+          if (window.failNextZenWrite) {
+            window.failNextZenWrite = false;
+            chromeApi.runtime.lastError = { message: "Write failed" };
+            callback?.();
+            chromeApi.runtime.lastError = undefined;
+            return;
+          }
           const oldValue = storedSettings;
           storedSettings = items.xhecSettings;
           listeners.forEach((listener) => {
@@ -130,7 +162,7 @@ async function createFixturePage(browser, url, initialSettings) {
       });
     };
     window.getZenViewListenerCount = () => listeners.length;
-  }, initialSettings);
+  }, { settings: initialSettings, deferRead });
 
   await page.route("https://x.com/**", (route) => {
     route.fulfill({
@@ -182,10 +214,16 @@ async function main() {
     assert.deepEqual(await hiddenCardIds(homePage), []);
 
     await homePage.setViewportSize({ width: 800, height: 600 });
+    await setSettings(homePage, { ...visibleSettings, leftNavIconOnly: true });
     await homePage.evaluate(() => {
-      const control = document.getElementById("zen-view-page-control");
-      control.style.setProperty("--xhec-control-top", "550px");
-      control.style.setProperty("--xhec-control-left", "760px");
+      const header = document.createElement("header");
+      header.setAttribute("role", "banner");
+      header.innerHTML = '<div id="postAnchor" style="position:fixed;left:calc(100vw - 60px);bottom:82px"><a data-testid="SideNav_NewTweet_Button" href="/compose/post">Post</a></div>';
+      document.body.append(header);
+    });
+    await homePage.waitForFunction(() => {
+      const rect = document.querySelector(".xhec-page-button").getBoundingClientRect();
+      return rect.top === 532;
     });
     await homePage.locator(".xhec-page-button").click();
 
@@ -220,6 +258,7 @@ async function main() {
       largeViewportPanel.panelBottom <= largeViewportPanel.buttonTop - 8,
       "panel must open above a trigger near the viewport bottom",
     );
+    await captureScreenshot(homePage, "panel-800x600.png");
 
     await homePage.setViewportSize({ width: 500, height: 300 });
     await homePage.waitForTimeout(150);
@@ -247,6 +286,30 @@ async function main() {
       shortViewportPanel.scrollHeight > shortViewportPanel.clientHeight,
       "short panel must scroll internally",
     );
+    await captureScreenshot(homePage, "panel-500x300.png");
+
+    const countToggle = homePage.locator('[data-xhec-setting-key="engagementCounts"]');
+    assert.equal(await countToggle.isChecked(), true);
+    await countToggle.uncheck();
+    assert.equal(await homePage.evaluate(() => document.documentElement.classList.contains(
+      "xhec-hide-engagement-counts")), true, "turning display off must hide counts");
+    await countToggle.check();
+    assert.equal(await homePage.evaluate(() => document.documentElement.classList.contains(
+      "xhec-hide-engagement-counts")), false, "turning display on must restore counts");
+
+    await homePage.evaluate(() => {
+      const post = document.getElementById("postAnchor");
+      post.style.bottom = "-50px";
+      post.style.left = "1200px";
+      window.dispatchEvent(new Event("resize"));
+    });
+    await homePage.waitForTimeout(150);
+    const triggerWithinViewport = await homePage.locator(".xhec-page-button").evaluate((button) => {
+      const rect = button.getBoundingClientRect();
+      return rect.top >= 8 && rect.left >= 8 &&
+        rect.bottom <= innerHeight - 8 && rect.right <= innerWidth - 8;
+    });
+    assert.ok(triggerWithinViewport, "settings trigger must remain reachable when its anchor is offscreen");
 
     await homePage.evaluate(() => {
       const panel = document.getElementById("zen-view-page-panel");
@@ -255,6 +318,7 @@ async function main() {
       button.setAttribute("aria-expanded", "false");
     });
     await homePage.setViewportSize({ width: 1280, height: 720 });
+    await setSettings(homePage, visibleSettings);
 
     const sidebarWidth = await homePage.locator("#sidebar").evaluate(
       (element) => element.getBoundingClientRect().width,
@@ -372,6 +436,20 @@ async function main() {
       false,
     );
 
+    await setSettings(videoPage, { ...visibleSettings, engagementCounts: true });
+    await videoPage.locator("#dynamicCount").evaluate((element) => {
+      element.firstChild.data = "12";
+    });
+    await videoPage.waitForTimeout(150);
+    assert.equal(await videoPage.locator("#dynamicCount").isVisible(), false,
+      "counts updated in an existing text node must be hidden");
+    await videoPage.locator("#dynamicCount").evaluate((element) => {
+      element.firstChild.data = "Like";
+    });
+    await videoPage.waitForTimeout(150);
+    assert.equal(await videoPage.locator("#dynamicCount").isVisible(), true,
+      "a reused count node must not hide a non-numeric action label");
+
     const chatPage = await createFixturePage(
       browser,
       "https://x.com/i/chat",
@@ -397,6 +475,20 @@ async function main() {
       "chat must never hide the whole sidebar shell",
     );
 
+    const loadingPage = await createFixturePage(browser, "https://x.com/home", visibleSettings, true);
+    await loadingPage.locator(".xhec-page-button").click();
+    const loadingToggle = loadingPage.locator('[data-xhec-setting-key="engagementCounts"]');
+    assert.equal(await loadingToggle.isDisabled(), true, "in-page settings must wait for storage hydration");
+    await loadingToggle.dispatchEvent("change");
+    await loadingPage.evaluate(() => window.finishZenRead());
+    assert.equal(await loadingToggle.isChecked(), true, "early events must preserve the stored preferences");
+    await loadingPage.evaluate(() => { window.failNextZenWrite = true; });
+    await loadingToggle.click();
+    assert.equal(await loadingToggle.isChecked(), true, "failed in-page saves must restore the previous setting");
+    assert.equal(await loadingPage.evaluate(() => document.documentElement.classList.contains(
+      "xhec-hide-engagement-counts")), false, "failed saves must also restore the page display");
+
+    assert.deepEqual(pageErrors, [], "fixtures must not emit uncaught page errors");
     console.log("sidebar smoke test passed");
   } finally {
     await browser.close();

@@ -110,6 +110,10 @@
   ].join(",");
   const PROMOTED_LABEL_EXCLUSION_SELECTOR = [
     '[data-testid="tweetText"]',
+    '[data-testid="User-Name"]',
+    '[data-testid="card.wrapper"]',
+    "a",
+    '[role="link"]',
     PROMOTED_MEDIA_SELECTOR,
   ].join(",");
   const OBSERVER_DEBOUNCE_MS = 80;
@@ -148,6 +152,8 @@
   const CHAT_PATH_RE = /^\/(?:i\/chat|messages)(?:\/|$)/u;
 
   let settings = { ...DEFAULT_SETTINGS };
+  let settingsLoaded = false;
+  let settingsSaving = false;
   let scanTimer = 0;
   let uiTimer = 0;
 
@@ -197,6 +203,7 @@
   }
 
   function applySettings(nextSettings) {
+    settingsLoaded = true;
     settings = normalizeSettings(nextSettings);
 
     Object.entries(HTML_CLASS_BY_SETTING).forEach(([key, className]) => {
@@ -217,14 +224,32 @@
   }
 
   function saveSettings(nextSettings) {
+    if (!settingsLoaded || settingsSaving) {
+      return;
+    }
     const normalizedSettings = normalizeSettings(nextSettings);
-    applySettings(normalizedSettings);
 
     if (typeof chrome === "undefined" || !chrome.storage?.local) {
+      applySettings(normalizedSettings);
       return;
     }
 
-    chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: normalizedSettings });
+    const previousSettings = settings;
+    settingsSaving = true;
+    applySettings(normalizedSettings);
+    chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: normalizedSettings }, () => {
+      const failed = Boolean(chrome.runtime?.lastError);
+      settingsSaving = false;
+      if (failed) {
+        applySettings(previousSettings);
+      } else {
+        renderPageControlSettings();
+      }
+      const button = document.querySelector(`#${PAGE_CONTROL_ID} .xhec-page-button`);
+      if (button) {
+        button.title = failed ? "Settings could not be saved. Please try again." : "Zen View for X";
+      }
+    });
   }
 
   function isCountText(value) {
@@ -667,13 +692,26 @@
       : compactNav
         ? 20
         : 76;
+    const buttonRect = control.querySelector(".xhec-page-button").getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+    const clampedTop = clampToRange(
+      Math.round(top),
+      PAGE_PANEL_VIEWPORT_MARGIN,
+      viewportHeight - buttonRect.height - PAGE_PANEL_VIEWPORT_MARGIN,
+    );
+    const clampedLeft = clampToRange(
+      Math.round(rawLeft),
+      PAGE_PANEL_VIEWPORT_MARGIN,
+      viewportWidth - buttonRect.width - PAGE_PANEL_VIEWPORT_MARGIN,
+    );
     control.style.setProperty(
       "--xhec-control-top",
-      `${Math.max(8, Math.round(top))}px`,
+      `${clampedTop}px`,
     );
     control.style.setProperty(
       "--xhec-control-left",
-      `${Math.max(8, Math.round(rawLeft))}px`,
+      `${clampedLeft}px`,
     );
   }
 
@@ -688,6 +726,7 @@
       .querySelectorAll("[data-xhec-setting-key]")
       .forEach((input) => {
         input.checked = !settings[input.dataset.xhecSettingKey];
+        input.disabled = !settingsLoaded || settingsSaving;
       });
   }
 
@@ -835,6 +874,9 @@
     }
 
     if (settings.engagementCounts) {
+      document.querySelectorAll(`.${HIDDEN_COUNT_CLASS}`).forEach((element) => {
+        element.classList.remove(HIDDEN_COUNT_CLASS);
+      });
       document.querySelectorAll(ACTION_SELECTOR).forEach(hideVisibleCounts);
     }
   }
@@ -862,6 +904,11 @@
     chrome.storage.local.get(
       { [SETTINGS_STORAGE_KEY]: null, [LEGACY_STORAGE_KEY]: null },
       (items) => {
+        if (chrome.runtime?.lastError) {
+          const button = document.querySelector(`#${PAGE_CONTROL_ID} .xhec-page-button`);
+          if (button) button.title = "Settings could not be loaded. Please reload the page.";
+          return;
+        }
         applySettings(settingsFromStorage(items));
       },
     );
@@ -911,6 +958,7 @@
   const observer = new MutationObserver(scheduleDomRefresh);
   observer.observe(document.documentElement, {
     childList: true,
+    characterData: true,
     subtree: true,
   });
 })();

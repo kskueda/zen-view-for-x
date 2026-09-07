@@ -16,6 +16,8 @@
   const toggles = Array.from(document.querySelectorAll("[data-setting-key]"));
   const statusText = document.getElementById("statusText");
   let settings = { ...DEFAULT_SETTINGS };
+  let loaded = false;
+  let saving = false;
 
   function normalizeSettings(value) {
     return Object.fromEntries(
@@ -61,30 +63,53 @@
   function renderSettings() {
     toggles.forEach((toggle) => {
       toggle.checked = !settings[toggle.dataset.settingKey];
+      toggle.disabled = !loaded || saving;
     });
 
     updateStatusText();
   }
 
-  function saveSettings() {
-    chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: settings }, renderSettings);
+  function saveSettings(previousSettings) {
+    saving = true;
+    renderSettings();
+    chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: settings }, () => {
+      const failed = Boolean(chrome.runtime?.lastError);
+      saving = false;
+      if (failed) {
+        settings = previousSettings;
+      }
+      renderSettings();
+      if (failed) {
+        statusText.textContent = "保存できませんでした。もう一度お試しください。";
+      }
+    });
   }
 
+  toggles.forEach((toggle) => { toggle.disabled = true; });
   chrome.storage.local.get(
     { [SETTINGS_STORAGE_KEY]: null, [LEGACY_STORAGE_KEY]: null },
     (items) => {
+      if (chrome.runtime?.lastError) {
+        statusText.textContent = "設定を読み込めませんでした。開き直してください。";
+        return;
+      }
       settings = settingsFromStorage(items);
+      loaded = true;
       renderSettings();
     },
   );
 
   toggles.forEach((toggle) => {
     toggle.addEventListener("change", () => {
+      if (!loaded || saving) {
+        return;
+      }
+      const previousSettings = settings;
       settings = {
         ...settings,
         [toggle.dataset.settingKey]: !toggle.checked,
       };
-      saveSettings();
+      saveSettings(previousSettings);
     });
   });
 })();
