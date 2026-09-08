@@ -453,6 +453,20 @@ async function main() {
     await videoPage.waitForTimeout(150);
     assert.equal(await videoPage.locator("#dynamicCount").isVisible(), true,
       "a reused count node must not hide a non-numeric action label");
+    await videoPage.locator("#dynamicCount").evaluate((element) => {
+      element.setAttribute("data-testid", "app-text-transition-container");
+    });
+    await videoPage.waitForTimeout(150);
+    assert.equal(await videoPage.locator("#dynamicCount").isVisible(), true,
+      "a transition container must not hide a non-numeric action label");
+    await videoPage.locator("#dynamicCount").evaluate((element) => { element.firstChild.data = "12"; });
+    await videoPage.waitForTimeout(150);
+    assert.equal(await videoPage.locator("#dynamicCount").isVisible(), false,
+      "numeric transition containers must still be hidden");
+    await videoPage.locator("#dynamicCount").evaluate((element) => { element.firstChild.data = "Like"; });
+    await videoPage.waitForTimeout(150);
+    assert.equal(await videoPage.locator("#dynamicCount").isVisible(), true,
+      "transition containers reused for action labels must become visible again");
 
     const chatPage = await createFixturePage(
       browser,

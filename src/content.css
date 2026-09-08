@@ -1,11 +1,3 @@
-html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="reply"] [data-testid="app-text-transition-container"],
-html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="like"] [data-testid="app-text-transition-container"],
-html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="unlike"] [data-testid="app-text-transition-container"],
-html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="retweet"] [data-testid="app-text-transition-container"],
-html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="unretweet"] [data-testid="app-text-transition-container"],
-html.xhec-hide-engagement-counts article[data-testid="tweet"] [data-testid="analytics"] [data-testid="app-text-transition-container"],
-html.xhec-hide-engagement-counts article[data-testid="tweet"] a[href$="/analytics"] [data-testid="app-text-transition-container"],
-html.xhec-hide-engagement-counts article[data-testid="tweet"] a[href*="/analytics?"] [data-testid="app-text-transition-container"],
 html.xhec-hide-engagement-counts .xhec-hidden-engagement-count,
 html.xhec-hide-promoted-posts .xhec-hidden-promoted,
 html.xhec-hide-sidebar-boxes .xhec-hidden-sidebar-box {
