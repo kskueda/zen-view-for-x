@@ -3,7 +3,7 @@
   "name": "Zen View for X",
   "short_name": "Zen View",
   "description": "A calmer X experience with controls for metrics, promoted posts, sidebars, and compact navigation.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "homepage_url": "https://github.com/kskueda/zen-view-for-x",
   "icons": {
     "16": "assets/icons/icon-16.png",

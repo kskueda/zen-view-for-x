@@ -1,6 +1,6 @@
 {
   "name": "zen-view-for-x",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Development and release tooling for the Zen View for X browser extension.",
   "license": "MIT",
