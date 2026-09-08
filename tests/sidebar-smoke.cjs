@@ -506,6 +506,51 @@ async function main() {
     assert.equal(await loadingPage.evaluate(() => document.documentElement.classList.contains(
       "xhec-hide-engagement-counts")), false, "failed saves must also restore the page display");
 
+    const alignmentPage = await createFixturePage(browser, "https://x.com/home", visibleSettings);
+    await alignmentPage.evaluate(() => {
+      const header = document.createElement("header");
+      header.setAttribute("role", "banner");
+      header.innerHTML = `
+        <a aria-label="X" href="/home" style="position:absolute;left:20px;top:10px;transform:translateY(3px);z-index:7">X</a>
+        <nav role="navigation" style="position:absolute;left:150px;top:80px"><a role="link" href="/home">Home</a></nav>
+        <a data-testid="SideNav_NewTweet_Button" href="/compose/post" style="position:fixed;left:20px;top:150px;transform:translateY(5px);z-index:9">Post</a>`;
+      document.body.append(header);
+    });
+    const readAlignmentStyles = () => alignmentPage.locator('header > a').evaluateAll((elements) =>
+      elements.map((element) => [element.style.position, element.style.transform, element.style.zIndex]));
+    const originalAlignment = [["absolute", "translateY(3px)", "7"], ["fixed", "translateY(5px)", "9"]];
+    await alignmentPage.waitForTimeout(150);
+    assert.deepEqual(await readAlignmentStyles(), originalAlignment,
+      "normal navigation must leave the page's own inline positioning untouched");
+    await setSettings(alignmentPage, { ...visibleSettings, leftNavIconOnly: true });
+    await alignmentPage.waitForTimeout(150);
+    const navCenter = await alignmentPage.locator('nav a').evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    });
+    for (const center of await alignmentPage.locator('header > a').evaluateAll((elements) =>
+      elements.map((element) => { const rect = element.getBoundingClientRect(); return rect.left + rect.width / 2; }))) {
+      assert.ok(Math.abs(center - navCenter) <= 1, "compact icons must remain centered");
+    }
+    assert.equal(await alignmentPage.locator('[data-testid="SideNav_NewTweet_Button"]').evaluate((element) =>
+      element.getBoundingClientRect().top), 155, "compact alignment must preserve the page's vertical transform");
+    await setSettings(alignmentPage, visibleSettings);
+    await alignmentPage.waitForTimeout(150);
+    assert.deepEqual(await readAlignmentStyles(), originalAlignment,
+      "leaving compact navigation must restore the page's original positioning");
+    await setSettings(alignmentPage, { ...visibleSettings, leftNavIconOnly: true });
+    await alignmentPage.waitForTimeout(150);
+    await alignmentPage.locator('a[aria-label="X"]').evaluate((element) => {
+      element.style.setProperty("transform", "translateY(11px)", "important");
+    });
+    await setSettings(alignmentPage, visibleSettings);
+    await alignmentPage.waitForTimeout(150);
+    assert.deepEqual(await readAlignmentStyles(), [
+      ["absolute", "translateY(11px)", "7"], originalAlignment[1],
+    ], "a newer page-authored style must not be replaced by our saved snapshot");
+    assert.equal(await alignmentPage.locator('a[aria-label="X"]').evaluate((element) =>
+      element.style.getPropertyPriority("transform")), "important");
+
     const newerSettings = { ...visibleSettings, sidebarNews: true };
     const lateReadPage = await createFixturePage(browser, "https://x.com/home", visibleSettings, true);
     await setSettings(lateReadPage, newerSettings);

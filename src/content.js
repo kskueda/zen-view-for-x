@@ -157,6 +157,7 @@
   let storageRevision = 0;
   let scanTimer = 0;
   let uiTimer = 0;
+  const alignmentStyles = new WeakMap();
 
   function normalizeSettings(value) {
     return Object.fromEntries(
@@ -563,9 +564,25 @@
   }
 
   function resetElementAlignment(element) {
-    element.style.position = "";
-    element.style.transform = "";
-    element.style.zIndex = "";
+    const savedStyles = alignmentStyles.get(element);
+    if (!savedStyles) {
+      return;
+    }
+
+    // Restore only our overrides; keep any newer styles written by the page.
+    savedStyles.forEach(({ property, value, priority, appliedValue, appliedPriority }) => {
+      if (
+        element.style.getPropertyValue(property) === appliedValue &&
+        element.style.getPropertyPriority(property) === appliedPriority
+      ) {
+        if (value) {
+          element.style.setProperty(property, value, priority);
+        } else {
+          element.style.removeProperty(property);
+        }
+      }
+    });
+    alignmentStyles.delete(element);
   }
 
   function alignElementToNavigationCenter(element) {
@@ -593,9 +610,25 @@
     const elementCenter = elementRect.left + elementRect.width / 2;
     const offset = Math.round(navCenter - elementCenter);
 
-    element.style.position = "relative";
-    element.style.transform = `translateX(${offset}px)`;
-    element.style.zIndex = "1";
+    const computedStyle = getComputedStyle(element);
+    const originalTransform = computedStyle.transform === "none" ? "" : computedStyle.transform;
+    const overrides = {
+      position: computedStyle.position === "static" ? "relative" : computedStyle.position,
+      transform: `translateX(${offset}px) ${originalTransform}`.trim(),
+      "z-index": computedStyle.zIndex === "auto" ? "1" : computedStyle.zIndex,
+    };
+    alignmentStyles.set(element, Object.entries(overrides).map(([property, override]) => {
+      const value = element.style.getPropertyValue(property);
+      const priority = element.style.getPropertyPriority(property);
+      element.style.setProperty(property, override, priority);
+      return {
+        property,
+        value,
+        priority,
+        appliedValue: element.style.getPropertyValue(property),
+        appliedPriority: element.style.getPropertyPriority(property),
+      };
+    }));
   }
 
   function alignCompactXLogo() {
