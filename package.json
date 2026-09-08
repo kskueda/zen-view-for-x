@@ -8,8 +8,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node tests/sidebar-smoke.cjs && node tests/popup-smoke.cjs && node tests/package-smoke.cjs",
-    "check": "node --check src/content.js && node --check src/popup.js && node --check tests/sidebar-smoke.cjs && node --check tests/popup-smoke.cjs && node --check tests/package-smoke.cjs && node scripts/verify-extension.mjs",
+    "test": "node tests/sidebar-smoke.cjs && node tests/popup-smoke.cjs && node tests/extension-smoke.cjs && node tests/package-smoke.cjs",
+    "test:parity": "node tests/behavior-parity.cjs",
+    "check": "node scripts/check.mjs",
     "package": "node scripts/package-extension.mjs",
     "store-assets": "node scripts/generate-store-assets.mjs"
   },

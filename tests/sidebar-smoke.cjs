@@ -4,14 +4,8 @@ const path = require("node:path");
 const { chromium } = require("playwright");
 
 const extensionRoot = path.resolve(__dirname, "..");
-const contentScript = fs.readFileSync(
-  path.join(extensionRoot, "src", "content.js"),
-  "utf8",
-);
-const contentStyle = fs.readFileSync(
-  path.join(extensionRoot, "src", "content.css"),
-  "utf8",
-);
+const manifest = JSON.parse(fs.readFileSync(path.join(extensionRoot, "manifest.json"), "utf8"));
+const contentFiles = manifest.content_scripts[0];
 const pageErrors = [];
 const screenshotDirectory = process.argv.includes("--screenshots")
   ? path.join(extensionRoot, "dist", "qa")
@@ -178,8 +172,12 @@ async function createFixturePage(browser, url, initialSettings, deferRead = fals
     });
   });
   await page.goto(url);
-  await page.addStyleTag({ content: contentStyle });
-  await page.addScriptTag({ content: contentScript });
+  for (const file of contentFiles.css) {
+    await page.addStyleTag({ path: path.join(extensionRoot, file) });
+  }
+  for (const file of contentFiles.js) {
+    await page.addScriptTag({ path: path.join(extensionRoot, file) });
+  }
   await page.waitForTimeout(150);
 
   return page;

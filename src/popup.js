@@ -1,17 +1,39 @@
 (() => {
-  const SETTINGS_STORAGE_KEY = "xhecSettings";
-  const LEGACY_STORAGE_KEY = "hideEngagementCounts";
-  const DEFAULT_SETTINGS = {
-    engagementCounts: true,
-    promotedPosts: true,
-    sidebarPremium: true,
-    sidebarLive: true,
-    sidebarRecommendations: true,
-    sidebarTrends: true,
-    sidebarNews: true,
-    leftNavIconOnly: true,
-  };
-  const LEGACY_SIDEBAR_SETTING_KEY = "sidebarBoxes";
+  const {
+    SETTINGS_STORAGE_KEY,
+    LEGACY_STORAGE_KEY,
+    DEFAULT_SETTINGS,
+    SETTING_ITEMS,
+    normalizeSettings,
+    settingsFromStorage,
+  } = globalThis.ZenView.settings;
+
+  function renderSettingRows() {
+    const list = document.querySelector(".toggle-list");
+    SETTING_ITEMS.forEach(({ key, label: name, detail }) => {
+      const label = document.createElement("label");
+      label.className = "toggle-row";
+      label.htmlFor = `${key}Toggle`;
+
+      const copy = document.createElement("span");
+      copy.className = "toggle-copy";
+      const title = document.createElement("span");
+      title.textContent = name;
+      const description = document.createElement("span");
+      description.textContent = detail;
+      copy.append(title, document.createTextNode("\n"), description);
+
+      const input = document.createElement("input");
+      input.id = `${key}Toggle`;
+      input.type = "checkbox";
+      input.setAttribute("role", "switch");
+      input.dataset.settingKey = key;
+      label.append(copy, document.createTextNode("\n"), input);
+      list.append(label);
+    });
+  }
+
+  renderSettingRows();
 
   const toggles = Array.from(document.querySelectorAll("[data-setting-key]"));
   const statusText = document.getElementById("statusText");
@@ -19,36 +41,6 @@
   let loaded = false;
   let saving = false;
   let storageRevision = 0;
-
-  function normalizeSettings(value) {
-    return Object.fromEntries(
-      Object.entries(DEFAULT_SETTINGS).map(([key, defaultValue]) => {
-        if (typeof value?.[key] === "boolean") {
-          return [key, value[key]];
-        }
-
-        if (key.startsWith("sidebar") && typeof value?.[LEGACY_SIDEBAR_SETTING_KEY] === "boolean") {
-          return [key, value[LEGACY_SIDEBAR_SETTING_KEY]];
-        }
-
-        return [key, defaultValue];
-      }),
-    );
-  }
-
-  function settingsFromStorage(items) {
-    if (items[SETTINGS_STORAGE_KEY]) {
-      return normalizeSettings(items[SETTINGS_STORAGE_KEY]);
-    }
-
-    if (typeof items[LEGACY_STORAGE_KEY] === "boolean") {
-      return Object.fromEntries(
-        Object.keys(DEFAULT_SETTINGS).map((key) => [key, items[LEGACY_STORAGE_KEY]]),
-      );
-    }
-
-    return { ...DEFAULT_SETTINGS };
-  }
 
   function updateStatusText() {
     const shownCount = Object.values(settings).filter((isHidden) => !isHidden).length;

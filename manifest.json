@@ -32,6 +32,10 @@
         "src/content.css"
       ],
       "js": [
+        "src/settings.js",
+        "src/content/navigation.js",
+        "src/content/page-control.js",
+        "src/content/filters.js",
         "src/content.js"
       ],
       "run_at": "document_idle"
